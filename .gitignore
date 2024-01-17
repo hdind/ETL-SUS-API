@@ -161,3 +161,4 @@ cython_debug/
 
 .config
 testes.py
+testes.ipynb
