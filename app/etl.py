@@ -3,7 +3,7 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import pandas as pd
-import json
+from google.cloud import storage
 from api.sus import SUS_API
 
 
@@ -34,7 +34,14 @@ class ETL:
             df_raw = pd.concat([df_raw, df_temp], ignore_index=True)
             return df_raw
         
-    # def load_to_bucket(df):
+    def load_to_bucket(df, client):
+        df.to_csv(r'..\data\sus_data.csv', index=False)
+
+        bucket = client.get_bucket('stack-sus')
+        blob = bucket.blob('/sus_data.csv')
+        blob.upload_from_filename(r'..\data\sus_data.csv')
+
+        print('Tudo certo, arquivo armazenado no bucket!')
 
     # def load_to_nosql(df):
         
@@ -42,13 +49,14 @@ class ETL:
 
 
 def main():
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = r'.\utils\coastal-fiber-411610-ff4ba4c97db9.json'
+    client = storage.Client()
+
     sus_api = ETL()
     
     data = sus_api.extract()
-
     df_raw = sus_api.transform(data)
-
-    sus_api.load_to_bucket(df_raw)
+    sus_api.load_to_bucket(df_raw, client)
 
 if __name__ == '__main__':
     main()
