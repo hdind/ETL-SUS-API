@@ -1,12 +1,11 @@
-import os
 import requests
 from requests.auth import HTTPBasicAuth
 
 
 class SUS_API:
-    def __init__(self):
-        self.username = os.getenv('USERNAME')
-        self.password = os.getenv('PASSWORD')
+    def __init__(self, username, password):
+        self.username = username
+        self.password = password
         self.base_url = 'https://imunizacao-es.saude.gov.br/_search'
 
     def get_api(self):
@@ -22,6 +21,7 @@ class SUS_API:
             
         except Exception as e:
             print(f'Erro ao acessar a API: {str:(e)}')    
+
 
 if __name__ == '__main__':
     conn = SUS_API()
