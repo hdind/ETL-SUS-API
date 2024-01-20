@@ -13,11 +13,10 @@ class SUS_API:
             response = requests.get(self.base_url, auth=HTTPBasicAuth(self.username, self.password))
             
             if response.status_code == 200:
-                data = response.json()
-                return data
+                return response
             else:
                 print(f'Erro na solicitação!!! Código de Status: {response.status_code}')
-                return response.json()
+                raise Exception
             
         except Exception as e:
             print(f'Erro ao acessar a API: {str:(e)}')    
