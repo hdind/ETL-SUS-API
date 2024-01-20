@@ -12,7 +12,7 @@ class ETL:
         conn = SUS_API(os.getenv('USERNAME'), os.getenv('PASSWORD'))
         response = conn.get_api()
         return response.json()
-
+    
     def transform(data):
         df_raw = pd.DataFrame()
 
@@ -32,17 +32,19 @@ class ETL:
             df_temp['vacina_dataAplicacao'] = data['hits']['hits'][i]['_source']['vacina_dataAplicacao']
 
             df_raw = pd.concat([df_raw, df_temp], ignore_index=True)
-            return df_raw
-        
-    def load_to_bucket(df, client):
-        df.to_csv(r'..\data\sus_data.csv', index=False)
 
+        df_raw.to_csv(r'.\data\sus_data.csv', index=False)
+        print(len(df_raw) + 'linhas foram salvas em .\data\sus_data.csv')
+        return 1
+        
+    def load_to_bucket(client):
         bucket = client.get_bucket('stack-sus')
-        blob = bucket.blob('/sus_data.csv')
-        blob.upload_from_filename(r'..\data\sus_data.csv')
+        blob = bucket.blob('sus_data.csv')
+        blob.upload_from_filename(r'.\data\sus_data.csv')
 
         print('Tudo certo, arquivo armazenado no bucket!')
-
+        return 1
+    
     # def load_to_nosql(df):
         
     # def load_to_sb(df):
@@ -52,11 +54,11 @@ def main():
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = r'.\utils\coastal-fiber-411610-ff4ba4c97db9.json'
     client = storage.Client()
 
-    sus_api = ETL()
+    sus_api = ETL
     
     data = sus_api.extract()
-    df_raw = sus_api.transform(data)
-    sus_api.load_to_bucket(df_raw, client)
+    sus_api.transform(data)
+    sus_api.load_to_bucket(client)
 
 if __name__ == '__main__':
     main()
