@@ -65,7 +65,7 @@ class ETL:
             df_raw = pd.concat([df_raw, df_temp], ignore_index=True)
 
         df_raw.to_csv(r'.\data\sus_data.csv', index=False)
-        print(f'{len(df_raw)} linhas foram salvas em .\data\sus_data.csv')
+        df_raw.to_parquet(r'.\data\sus_data.parquet', compression='snappy', index=False)
         return 1
         
     def load_to_bucket(client):
@@ -80,10 +80,14 @@ class ETL:
         """
 
         bucket = client.get_bucket('stack-sus')
+
         blob = bucket.blob('sus_data.csv')
         blob.upload_from_filename(r'.\data\sus_data.csv')
 
-        print('Tudo certo, arquivo armazenado no bucket!')
+        blob = bucket.blob('sus_data.parquet')
+        blob.upload_from_filename(r'.\data\sus_data.parquet')
+
+        print('Tudo certo, arquivos armazenados no bucket!')
         return 1
             
     def load_to_mysql():
@@ -135,8 +139,6 @@ class ETL:
 
     # def load_to_nosql(df):
 
-    # def load_parquet(df):
-        
 
 def main():
     """
@@ -148,10 +150,10 @@ def main():
 
     sus_api = ETL
     
-    # data = sus_api.extract()
-    # sus_api.transform(data)
-    # sus_api.load_to_bucket(client)
-    sus_api.load_to_mysql()
+    data = sus_api.extract()
+    sus_api.transform(data)
+    sus_api.load_to_bucket(client)
+    # sus_api.load_to_mysql()
 
 if __name__ == '__main__':
     main()
