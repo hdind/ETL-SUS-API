@@ -2,9 +2,12 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+import pymysql
 import pandas as pd
 from google.cloud import storage
 from api.sus import SUS_API
+from sqlalchemy import create_engine, text
+from google.cloud.sql.connector import Connector
 
 
 class ETL: 
@@ -82,11 +85,58 @@ class ETL:
 
         print('Tudo certo, arquivo armazenado no bucket!')
         return 1
-    
-    # def load_to_nosql(df):
-        
-    # def load_to_sb(df):
+            
+    def load_to_mysql():
+        connector = Connector()
 
+        # function to return the database connection
+        def getconn() -> pymysql.connections.Connection:
+            conn: pymysql.connections.Connection = connector.connect(
+                "coastal-fiber-411610:us-central1:teste-stack-01",
+                "pymysql",
+                user=os.getenv("MYSQL_USERNAME"),
+                password=os.getenv("MYSQL_PASSWORD"),
+                db="default"
+            )
+            return conn
+        
+        pool = create_engine(
+            "mysql+pymysql://",
+            creator=getconn,
+        )
+
+        with pool.connect() as db_conn:
+            try:
+                create_table = db_conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS covid_sus (
+                        paciente_idade INT,
+                        paciente_enumSexoBiologico VARCHAR(255),
+                        paciente_racaCor_valor VARCHAR(255),
+                        paciente_endereco_nmMunicipio VARCHAR(255),
+                        paciente_endereco_uf VARCHAR(2),
+                        estabelecimento_razaoSocial VARCHAR(255),
+                        vacina_fabricante_referencia VARCHAR(255),
+                        vacina_categoria_nome VARCHAR(255),
+                        vacina_lote VARCHAR(255),
+                        vacina_fabricante_nome VARCHAR(255),
+                        vacina_dataAplicacao VARCHAR(50)
+                    );    
+                """))
+
+                create_table.fetchall()
+            except:
+                pass
+
+            df = pd.read_csv(r'.\data\sus_data.csv')
+            print(df.info())
+            df.to_sql('covid_sus', con=db_conn, if_exists='replace', index=False)
+            db_conn.commit()
+            return 1
+
+    # def load_to_nosql(df):
+
+    # def load_parquet(df):
+        
 
 def main():
     """
@@ -98,9 +148,10 @@ def main():
 
     sus_api = ETL
     
-    data = sus_api.extract()
-    sus_api.transform(data)
-    sus_api.load_to_bucket(client)
+    # data = sus_api.extract()
+    # sus_api.transform(data)
+    # sus_api.load_to_bucket(client)
+    sus_api.load_to_mysql()
 
 if __name__ == '__main__':
     main()
