@@ -31,7 +31,7 @@ class ETL:
             dict: Dados extraídos da API no formato de dicionário.
         """
             
-        conn = SUS_API(os.getenv('USERNAME'), os.getenv('PASSWORD'))
+        conn = SUS_API(os.getenv('SUS_API_USERNAME'), os.getenv('SUS_API_PASSWORD'))
         response = conn.get_api()
         return response.json()
     
