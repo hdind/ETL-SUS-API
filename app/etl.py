@@ -4,7 +4,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import pymysql
 import pandas as pd
-from google.cloud import storage
+from google.cloud import storage, firestore
 from api.sus import SUS_API
 from sqlalchemy import create_engine, text
 from google.cloud.sql.connector import Connector
@@ -137,8 +137,15 @@ class ETL:
             db_conn.commit()
             return 1
 
-    # def load_to_nosql(df):
+    def load_to_firestore(firestore_client):
+        df = pd.read_csv(r'.\data\sus_data.csv')
+        data = df.to_dict(orient='records')
 
+        doc_ref = firestore_client.collection('covid_sus')
+
+        for i, record in enumerate(data):
+            doc_ref.document(f'record_{i}').set(record)
+        print('Dados adicionados ao Firestore com sucesso!')
 
 def main():
     """
@@ -146,14 +153,16 @@ def main():
     """
     
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = r'.\utils\coastal-fiber-411610-ff4ba4c97db9.json'
-    client = storage.Client()
+    bucket_client = storage.Client()
+    firestore_client = firestore.Client()
 
     sus_api = ETL
     
     data = sus_api.extract()
     sus_api.transform(data)
-    sus_api.load_to_bucket(client)
-    # sus_api.load_to_mysql()
+    sus_api.load_to_bucket(bucket_client)
+    sus_api.load_to_mysql()
+    sus_api.load_to_firestore(firestore_client)
 
 if __name__ == '__main__':
     main()
