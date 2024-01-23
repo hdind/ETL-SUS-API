@@ -14,7 +14,7 @@ O projeto está organizado da seguinte maneira:
 ## Pré-requisitos
 
 - Python 3.11.6
-- Bibliotecas Python: pandas, google-cloud-storage, requests
+- Bibliotecas Python: pandas, google-cloud-storage, google-cloud-firestore, requests, SQLAlchemy e pyarrow.
 
 ## Configuração
 
@@ -26,8 +26,10 @@ O projeto está organizado da seguinte maneira:
 
 2. Configure as variáveis de ambiente:
 
-    - `USERNAME`: Nome de usuário para autenticação na API do SUS.
-    - `PASSWORD`: Senha para autenticação na API do SUS.
+    - `SUS_API_USERNAME`: Nome de usuário para autenticação na API do SUS.
+    - `SUS_API_PASSWORD`: Senha para autenticação na API do SUS.
+    - `MYSQL_USERNAME`: Nome de usuário para autenticação na instância do MySQL no Google Cloud SQL.
+    - `MYSQL_PASSWORD`: Senha para autenticação na instância do MySQL no Google Cloud SQL.
     - `GOOGLE_APPLICATION_CREDENTIALS`: Caminho para o arquivo de credenciais do Google Cloud Storage.
 
 ## Uso
