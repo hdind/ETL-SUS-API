@@ -21,6 +21,8 @@ class ETL:
         extract() -> Realiza extracação dos dados da API do SUS.
         transform() -> Transforma os dados brutos retornados em um df.
         load_to_bucket() -> Carrega um arquivo csv no Google Cloud Storage.
+        load_to_mysql() -> Carrega um arquivo csv num banco MySQL no Google Cloud SQL.
+        load_to_firestore() -> Carrega um arquivo csv num banco NoSQL no Google Cloud Firestore.
     """
    
     def extract():
@@ -30,7 +32,6 @@ class ETL:
         Returns:
             dict: Dados extraídos da API no formato de dicionário.
         """
-            
         conn = SUS_API(os.getenv('SUS_API_USERNAME'), os.getenv('SUS_API_PASSWORD'))
         response = conn.get_api()
         return response.json()
@@ -46,6 +47,8 @@ class ETL:
         """
 
         df_raw = pd.DataFrame()
+
+        print('Iniciando estruturação dos dados.')
 
         for i in range(len(data['hits']['hits'])):
             df_temp = pd.DataFrame()
@@ -65,7 +68,9 @@ class ETL:
             df_raw = pd.concat([df_raw, df_temp], ignore_index=True)
 
         df_raw.to_csv(r'.\data\sus_data.csv', index=False)
+        print('Arquivo csv salvo.')
         df_raw.to_parquet(r'.\data\sus_data.parquet', compression='snappy', index=False)
+        print('Arquivo parquet salvo.')
         return 1
         
     def load_to_bucket(client):
@@ -78,7 +83,7 @@ class ETL:
         Returns:
             int: Retorna 1 para indicar que o carregamento foi concluído.
         """
-
+        print('Iniciando conexão com bucket.')
         bucket = client.get_bucket('stack-sus')
 
         blob = bucket.blob('sus_data.csv')
@@ -91,10 +96,25 @@ class ETL:
         return 1
             
     def load_to_mysql():
+        """
+        Carrega dados de um arquivo CSV para uma tabela MySQL.
+
+        Retorna:
+        int: 1 se o carregamento for bem-sucedido.
+        """
+        
+        print('Conectando com a instância MySQL.')
         connector = Connector()
 
         # function to return the database connection
         def getconn() -> pymysql.connections.Connection:
+            """
+            Retorna uma conexão com o banco de dados MySQL.
+
+            Retorna:
+            pymysql.connections.Connection: Conexão com o banco de dados.
+            """
+            
             conn: pymysql.connections.Connection = connector.connect(
                 "coastal-fiber-411610:us-central1:teste-stack-01",
                 "pymysql",
@@ -132,12 +152,21 @@ class ETL:
                 pass
 
             df = pd.read_csv(r'.\data\sus_data.csv')
-            print(df.info())
             df.to_sql('covid_sus', con=db_conn, if_exists='replace', index=False)
             db_conn.commit()
+            print('Dados salvos no MySQL com sucesso!')
             return 1
 
     def load_to_firestore(firestore_client):
+        """
+        Carrega dados de um arquivo CSV para o Firestore.
+
+        Args:
+        firestore_client: Cliente Firestore.
+
+        Retorna:
+        int: 1 se o carregamento for bem-sucedido.
+        """
         df = pd.read_csv(r'.\data\sus_data.csv')
         data = df.to_dict(orient='records')
 
@@ -147,11 +176,14 @@ class ETL:
             doc_ref.document(f'record_{i}').set(record)
         print('Dados adicionados ao Firestore com sucesso!')
 
+        return 1
+
 def main():
     """
     Função principal que executa as operações ETL.
     """
     
+    print('Criando clientes de conexão com GCP.')
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = r'.\utils\coastal-fiber-411610-ff4ba4c97db9.json'
     bucket_client = storage.Client()
     firestore_client = firestore.Client()
@@ -163,6 +195,7 @@ def main():
     sus_api.load_to_bucket(bucket_client)
     sus_api.load_to_mysql()
     sus_api.load_to_firestore(firestore_client)
+    return 1
 
 if __name__ == '__main__':
     main()

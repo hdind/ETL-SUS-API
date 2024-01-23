@@ -38,11 +38,12 @@ class SUS_API:
             Exception -> Se a resposta da API não retornar um código de status 200.
         """
 
-        print('requisição iniciada')
+        print('Requisição iniciada')
         try:
             response = requests.get(self.base_url, auth=HTTPBasicAuth(self.username, self.password))
             
             if response.status_code == 200:
+                print('Requisição realizada com sucesso!')
                 return response
             else:
                 print(f'Erro na solicitação!!! Código de Status: {response.status_code}')
