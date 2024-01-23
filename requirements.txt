@@ -1,3 +1,8 @@
 requests==2.31.0
 pandas==2.1.4
 google-cloud-storage==2.14.0
+google-cloud-firestore==2.14.0
+SQLAlchemy==2.0.25
+cloud-sql-python-connector==1.6.0
+mysql-connector-python==8.3.0
+pyarrow==15.0.0
